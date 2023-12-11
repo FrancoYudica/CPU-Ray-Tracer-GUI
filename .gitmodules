@@ -1,0 +1,6 @@
+[submodule "dependencies/CPU-Ray-Tracing"]
+	path = dependencies/CPU-Ray-Tracing
+	url = git@github.com:FrancoYudica/CPU-Ray-Tracer.git
+[submodule "dependencies/WolfEngine"]
+	path = dependencies/WolfEngine
+	url = git@github.com:FrancoYudica/WolfEngine.git
