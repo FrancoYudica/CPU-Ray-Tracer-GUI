@@ -15,8 +15,11 @@ add_executable(
     src/MainLayer.cpp
     src/ImGuiRT.hpp
     src/ImGuiUtils.hpp
+    src/ImGuiUtils.cpp
     src/CameraController.hpp
     src/CameraController.cpp
+    src/GeometricObjectEditors.hpp
+    src/GeometricObjectEditors.cpp
     ${EDITOR_FILES}
 )
 

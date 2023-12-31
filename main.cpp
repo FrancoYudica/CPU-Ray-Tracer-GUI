@@ -16,15 +16,10 @@ int main()
         return -1;
     }
 
-    for (uint32_t i = 0; i < 20; i++)
-        std::cout << RT::Random::unit_float() << std::endl;
-
-
     auto& app = Wolf::Application::get();
     auto layer = std::make_shared<MainLayer>();
     app->add_layer(layer);
     app->run();
-
 
     return 0;
 }

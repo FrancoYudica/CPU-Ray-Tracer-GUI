@@ -11,15 +11,13 @@ namespace ImGuiRT {
 
 static bool camera_edit(std::shared_ptr<Camera>& camera, World& world)
 {
-    bool modified = false;
     int current_item = static_cast<int>(camera->camera_type);
 
     // Changes camera type
-    ImGuiUtils::combo_box<7>("Camera",
+    bool modified = ImGuiUtils::combo_box<7>("Camera",
         { "Orthographic", "Perspective - Pinhole", "Thin lens", "Fish eye",
             "Spherical panoramic", "Stereo Dual", "Stereo Anaglyph" },
-        current_item,
-        modified);
+        current_item);
 
     if (modified) {
         CameraType selected_type = static_cast<CameraType>(current_item);
@@ -87,7 +85,7 @@ static bool camera_edit(std::shared_ptr<Camera>& camera, World& world)
 
         // View plane distance
         float d = ortho->d;
-        if (ImGuiUtils::input("View plane distance", d, modified, 0.01f, 2000.0f))
+        if (ImGuiUtils::input("View plane distance", d, 0.01f, 2000.0f))
             ortho->set_view_distance(d);
 
         // Field of view
@@ -111,7 +109,7 @@ static bool camera_edit(std::shared_ptr<Camera>& camera, World& world)
 
         // View plane distance
         float d = pinhole->d;
-        if (ImGuiUtils::input("View plane distance", d, modified, 0.01f, 2000.0f))
+        if (ImGuiUtils::input("View plane distance", d, 0.01f, 2000.0f))
             pinhole->set_view_distance(d);
 
         // Field of view
@@ -207,8 +205,7 @@ static bool camera_edit(std::shared_ptr<Camera>& camera, World& world)
             bool modified_viewing_type = ImGuiUtils::combo_box<2>(
                 "Viewing type",
                 std::array<const char*, 2> { "Parallel", "Transverse" },
-                current_item,
-                modified);
+                current_item);
 
             if (modified_viewing_type)
                 stereo_camera->set_viewing(static_cast<Cameras::StereoViewingType>(current_item));
@@ -216,12 +213,12 @@ static bool camera_edit(std::shared_ptr<Camera>& camera, World& world)
 
         // Stereo angle
         float stereo_angle = Constants::OVER_180_PI * stereo_camera->beta;
-        if (ImGuiUtils::input("Stereo angle", stereo_angle, modified))
+        if (ImGuiUtils::input("Stereo angle", stereo_angle))
             stereo_camera->set_stereo_angle_degrees(stereo_angle);
 
         if (camera->get_camera_type() == CameraType::StereoAnaglyph) {
             auto anaglyph_camera = std::dynamic_pointer_cast<Cameras::AnaglyphCamera>(camera);
-            ImGuiUtils::color_edit("Left color", anaglyph_camera->left_color, modified);
+            ImGuiUtils::color_edit("Left color", anaglyph_camera->left_color);
         } else if (camera->get_camera_type() == CameraType::StereoDual) {
             auto stereo_dual_camera = std::dynamic_pointer_cast<Cameras::StereoDualCamera>(camera);
             // Pixel gap
@@ -251,7 +248,7 @@ static bool brdf_combo_box(const char* label, std::shared_ptr<BRDF>& brdf)
 
     int current_brdf_index = static_cast<int>(brdf->get_type());
     bool modified = false;
-    bool changed = ImGuiUtils::combo_box(label, brdf_types, current_brdf_index, modified);
+    bool changed = ImGuiUtils::combo_box(label, brdf_types, current_brdf_index);
 
     if (!changed)
         return false;
@@ -283,8 +280,7 @@ static bool material_combo_box(const char* label, std::shared_ptr<Material>& mat
         "Material: Plastic", "Material: Emissive" };
 
     int current_material_index = static_cast<int>(material->get_type());
-    bool modified = false;
-    ImGuiUtils::combo_box(label, material_types, current_material_index, modified);
+    bool modified = ImGuiUtils::combo_box(label, material_types, current_material_index);
 
     if (!modified)
         return false;
@@ -325,13 +321,13 @@ static bool edit_brdf(const char* label, std::shared_ptr<BRDF> brdf)
 
         {
             auto lambertian = std::dynamic_pointer_cast<BRDFS::Lambertian>(brdf);
-            ImGuiUtils::color_edit("Color", lambertian->cd, modified);
+            ImGuiUtils::color_edit("Color", lambertian->cd);
             ImGui::InputFloat("Coefficient", &lambertian->kd, 0.01f, 0.01f);
             lambertian->kd = glm::clamp(lambertian->kd, 0.0f, 1.0f);
         } break;
         case BRDFType::GlossySpecularPhong: {
             auto glossy_specular = std::dynamic_pointer_cast<BRDFS::GlossySpecularPhong>(brdf);
-            ImGuiUtils::color_edit("Color", glossy_specular->cs, modified);
+            ImGuiUtils::color_edit("Color", glossy_specular->cs);
             ImGui::InputFloat("Coefficient", &glossy_specular->ks, 0.01f, 0.01f);
             glossy_specular->ks = glm::clamp(glossy_specular->ks, 0.0f, 1.0f);
             ImGui::InputFloat("Specular exponent", &glossy_specular->e, 0.01f, 0.01f);
@@ -339,7 +335,7 @@ static bool edit_brdf(const char* label, std::shared_ptr<BRDF> brdf)
 
         case BRDFType::GlossySpecularBlinnPhong: {
             auto glossy_specular = std::dynamic_pointer_cast<BRDFS::GlossySpecularBlinnPhong>(brdf);
-            ImGuiUtils::color_edit("Color", glossy_specular->cs, modified);
+            ImGuiUtils::color_edit("Color", glossy_specular->cs);
             ImGui::InputFloat("Coefficient", &glossy_specular->ks, 0.01f, 0.01f);
             glossy_specular->ks = glm::clamp(glossy_specular->ks, 0.0f, 1.0f);
             ImGui::InputFloat("Specular exponent", &glossy_specular->e, 0.01f, 0.01f);
@@ -384,7 +380,7 @@ static bool edit_material(std::shared_ptr<Material>& material)
         } break;
         case MaterialType::Emissive: {
             auto emissive = std::dynamic_pointer_cast<Materials::Emissive>(material);
-            ImGuiUtils::color_edit("Emission color", emissive->color, modified);
+            ImGuiUtils::color_edit("Emission color", emissive->color);
             ImGui::InputFloat("Scale radiance", &emissive->ls);
         } break;
         }
@@ -393,402 +389,6 @@ static bool edit_material(std::shared_ptr<Material>& material)
     return modified;
 }
 
-static bool edit_container(const std::shared_ptr<GeometricObjects::Container>& container);
-
-static bool edit_geometric_object(GeometricObjectPtr& object)
-{
-    static const std::array<const char*, 22> geometric_types = {
-        "Sphere",
-        "Plane",
-        "Box",
-        "Disk",
-        "Rect",
-        "Triangle",
-        "GenericCylinder",
-        "Torus",
-        "Part Cylinder",
-        "Part Sphere",
-        "Solid Cylinder",
-        "Capsule",
-        "Part Torus",
-        "Compound Box",
-        "Annulus",
-        "Cone",
-        "Solid Cone",
-        "Thick Annulus",
-        "Bowl",
-        "Instance",
-        "BVH",
-        "Container"
-    };
-    bool modified = false;
-    const char* geometric_type_name = geometric_types[static_cast<uint32_t>(object->get_type())];
-    if (ImGui::TreeNodeEx(geometric_type_name)) {
-        switch (object->get_type()) {
-        case GeometricObjectType::Sphere: {
-            auto sphere = std::dynamic_pointer_cast<GeometricObjects::Sphere>(object);
-            auto center = sphere->get_center();
-            ImGuiUtils::input("Center", center, modified);
-            sphere->set_center(center);
-            double r = sphere->get_radius();
-            ImGui::InputDouble("Radius", &r);
-            sphere->set_radius(r);
-        } break;
-
-        case GeometricObjectType::Plane: {
-            auto plane = std::dynamic_pointer_cast<GeometricObjects::Plane>(object);
-            auto origin = plane->get_origin();
-            auto normal = plane->get_normal();
-            ImGuiUtils::input("Origin", origin, modified);
-            ImGuiUtils::input("Normal", normal, modified);
-            plane->set_normal(normal);
-            plane->set_origin(origin);
-        } break;
-
-        case GeometricObjectType::Box: {
-            auto box = std::dynamic_pointer_cast<GeometricObjects::Box>(object);
-
-            Vec3 center = box->get_center();
-            Vec3 min = box->get_min();
-            Vec3 max = box->get_max();
-            float half_dx = box->get_half_dx();
-            float half_dy = box->get_half_dy();
-            float half_dz = box->get_half_dz();
-            if (ImGuiUtils::input("Center", center, modified))
-                box->set_center(center);
-
-            if (ImGuiUtils::input("Min", min, modified))
-                box->set_min(min);
-
-            if (ImGuiUtils::input("Max", max, modified))
-                box->set_max(max);
-
-            if (ImGuiUtils::input("Half Dx", half_dx, modified))
-                box->set_half_dx(half_dx);
-
-            if (ImGuiUtils::input("Half Dy", half_dy, modified))
-                box->set_half_dy(half_dy);
-
-            if (ImGuiUtils::input("Half Dz", half_dz, modified))
-                box->set_half_dz(half_dz);
-        } break;
-
-        case GeometricObjectType::CompoundBox: {
-            auto box = std::dynamic_pointer_cast<GeometricObjects::CompoundBox>(object);
-
-            Vec3 center = box->get_center();
-            Vec3 min = box->get_min();
-            Vec3 max = box->get_max();
-            float half_dx = box->get_half_dx();
-            float half_dy = box->get_half_dy();
-            float half_dz = box->get_half_dz();
-            if (ImGuiUtils::input("Center", center, modified))
-                box->set_center(center);
-
-            if (ImGuiUtils::input("Min", min, modified))
-                box->set_min(min);
-
-            if (ImGuiUtils::input("Max", max, modified))
-                box->set_max(max);
-
-            if (ImGuiUtils::input("Half Dx", half_dx, modified))
-                box->set_half_dx(half_dx);
-
-            if (ImGuiUtils::input("Half Dy", half_dy, modified))
-                box->set_half_dy(half_dy);
-
-            if (ImGuiUtils::input("Half Dz", half_dz, modified))
-                box->set_half_dz(half_dz);
-        } break;
-
-        case GeometricObjectType::Capsule: {
-            auto capsule = std::dynamic_pointer_cast<GeometricObjects::Capsule>(object);
-            float radius = capsule->get_radius();
-            float height = capsule->get_height();
-            ImGuiUtils::input("Radius", radius, modified);
-            ImGuiUtils::input("Height", height, modified);
-            capsule->set_radius(radius);
-            capsule->set_height(height);
-        } break;
-
-        case GeometricObjectType::Disk: {
-            auto disk = std::dynamic_pointer_cast<GeometricObjects::Disk>(object);
-
-            Vec3 center = disk->get_center();
-            Vec3 normal = disk->get_normal();
-            float radius = disk->get_radius();
-            ImGuiUtils::input("Center", center, modified);
-            ImGuiUtils::input("Normal", normal, modified);
-            ImGui::InputFloat("Radius", &radius, modified);
-            disk->set_center(center);
-            disk->set_normal(normal);
-            disk->set_radius(radius);
-        } break;
-        case GeometricObjectType::Annulus: {
-            auto annulus = std::dynamic_pointer_cast<GeometricObjects::Annulus>(object);
-
-            Vec3 center = annulus->get_center();
-            Vec3 normal = annulus->get_normal();
-            float inner_radius = annulus->get_inner_radius();
-            float outer_radius = annulus->get_outer_radius();
-            ImGuiUtils::input("Center", center, modified);
-            ImGuiUtils::input("Normal", normal, modified);
-            ImGuiUtils::input("Inner radius", inner_radius, modified);
-            ImGuiUtils::input("Outer radius", outer_radius, modified);
-            annulus->set_center(center);
-            annulus->set_normal(normal);
-            annulus->set_inner_radius(inner_radius);
-            annulus->set_outer_radius(outer_radius);
-        } break;
-
-        case GeometricObjectType::Rect: {
-            auto rect = std::dynamic_pointer_cast<GeometricObjects::Rect>(object);
-
-            Vec3 p0 = rect->get_p0();
-            Vec3 a = rect->get_a();
-            Vec3 b = rect->get_b();
-
-            ImGuiUtils::input("p0 - corner", p0, modified);
-            ImGuiUtils::input("a", a, modified);
-            ImGuiUtils::input("b", b, modified);
-            rect->set_a(a);
-            rect->set_b(b);
-            rect->set_p0(p0);
-        } break;
-
-        case GeometricObjectType::Triangle: {
-            auto rect = std::dynamic_pointer_cast<GeometricObjects::Triangle>(object);
-
-            Vec3 a = rect->get_a();
-            Vec3 b = rect->get_b();
-            Vec3 c = rect->get_c();
-
-            ImGuiUtils::input("a", a, modified);
-            ImGuiUtils::input("b", b, modified);
-            ImGuiUtils::input("c", c, modified);
-            rect->set_a(a);
-            rect->set_b(b);
-            rect->set_c(b);
-        } break;
-
-        case GeometricObjectType::Cone: {
-            auto cone = std::dynamic_pointer_cast<GeometricObjects::Cone>(object);
-
-            float height = cone->get_height();
-            float radius = cone->get_radius();
-            ImGuiUtils::input("Height", height, modified);
-            ImGuiUtils::input("Radius", radius, modified);
-            cone->set_height(height);
-            cone->set_radius(radius);
-        } break;
-        case GeometricObjectType::SolidCone: {
-            auto cone = std::dynamic_pointer_cast<GeometricObjects::SolidCone>(object);
-
-            float height = cone->get_height();
-            float radius = cone->get_radius();
-            ImGuiUtils::input("Height", height, modified);
-            ImGuiUtils::input("Radius", radius, modified);
-            cone->set_height(height);
-            cone->set_radius(radius);
-        } break;
-
-        case GeometricObjectType::GenericCylinder: {
-            auto cylinder = std::dynamic_pointer_cast<GeometricObjects::GenericCylinder>(object);
-            float r = cylinder->get_radius();
-            float y0 = cylinder->get_y0();
-            float y1 = cylinder->get_y1();
-            ImGui::InputFloat("Radius", &r);
-            ImGui::InputFloat("Y0", &y0);
-            ImGui::InputFloat("Y1", &y1);
-            cylinder->set_radius(r);
-            cylinder->set_y0(y0);
-            cylinder->set_y1(y1);
-        } break;
-
-        case GeometricObjectType::ThickAnnulus: {
-            auto thick_annulus = std::dynamic_pointer_cast<GeometricObjects::ThickAnnulus>(object);
-            float inner_radius = thick_annulus->get_inner_radius();
-            float outer_radius = thick_annulus->get_outer_radius();
-            ImGuiUtils::input("Inner radius", inner_radius, modified);
-            ImGuiUtils::input("Outer radius", outer_radius, modified);
-            thick_annulus->set_inner_radius(inner_radius);
-            thick_annulus->set_outer_radius(outer_radius);
-        } break;
-
-        case GeometricObjectType::PartCylinder: {
-            auto cylinder = std::dynamic_pointer_cast<GeometricObjects::PartCylinder>(object);
-            float r = cylinder->get_radius();
-            float y0 = cylinder->get_y0();
-            float y1 = cylinder->get_y1();
-            float phi_min = cylinder->get_min_phi();
-            float phi_max = cylinder->get_max_phi();
-            ImGui::InputFloat("Radius", &r);
-            ImGui::InputFloat("Y0", &y0);
-            ImGui::InputFloat("Y1", &y1);
-            ImGuiUtils::input_degrees("Min phi", phi_min, modified, 0.0f, phi_max);
-            ImGuiUtils::input_degrees("Max phi", phi_max, modified, phi_min, Constants::PI_2);
-            cylinder->set_radius(r);
-            cylinder->set_y0(y0);
-            cylinder->set_y1(y1);
-            cylinder->set_min_phi(phi_min);
-            cylinder->set_max_phi(phi_max);
-        } break;
-
-        case GeometricObjectType::PartSphere: {
-            auto sphere = std::dynamic_pointer_cast<GeometricObjects::PartSphere>(object);
-            float phi_min = sphere->get_min_phi();
-            float phi_max = sphere->get_max_phi();
-            float theta_min = sphere->get_min_theta();
-            float theta_max = sphere->get_max_theta();
-            ImGuiUtils::input_degrees("Min phi", phi_min, modified, 0.0f, phi_max);
-            ImGuiUtils::input_degrees("Max phi", phi_max, modified, phi_min, Constants::PI_2);
-            ImGuiUtils::input_degrees("Min theta", theta_min, modified, 0.0f, theta_max);
-            ImGuiUtils::input_degrees("Max theta", theta_max, modified, theta_min, Constants::PI);
-            sphere->set_min_phi(phi_min);
-            sphere->set_max_phi(phi_max);
-            sphere->set_min_theta(theta_min);
-            sphere->set_max_theta(theta_max);
-
-        } break;
-
-        case GeometricObjectType::PartTorus: {
-            auto torus = std::dynamic_pointer_cast<GeometricObjects::PartTorus>(object);
-            float a = torus->get_a();
-            float b = torus->get_b();
-            float phi_min = torus->get_min_phi();
-            float phi_max = torus->get_max_phi();
-            float theta_min = torus->get_min_theta();
-            float theta_max = torus->get_max_theta();
-
-            ImGui::InputFloat("a", &a);
-            ImGui::InputFloat("b", &b);
-            ImGuiUtils::input_degrees("Min phi", phi_min, modified, 0.0f, phi_max);
-            ImGuiUtils::input_degrees("Max phi", phi_max, modified, phi_min, Constants::PI_2);
-            ImGuiUtils::input_degrees("Min theta", theta_min, modified, 0.0f, theta_max);
-            ImGuiUtils::input_degrees("Max theta", theta_max, modified, theta_min, Constants::PI_2);
-
-            torus->set_min_phi(phi_min);
-            torus->set_max_phi(phi_max);
-            torus->set_min_theta(theta_min);
-            torus->set_max_theta(theta_max);
-            torus->set_a(a);
-            torus->set_b(b);
-
-        } break;
-        case GeometricObjectType::Torus: {
-            auto torus = std::dynamic_pointer_cast<GeometricObjects::Torus>(object);
-            float a = torus->get_a();
-            float b = torus->get_b();
-            ImGui::InputFloat("a", &a);
-            ImGui::InputFloat("b", &b);
-            torus->set_a(a);
-            torus->set_b(b);
-        } break;
-
-        case GeometricObjectType::Instance: {
-            auto instance = std::dynamic_pointer_cast<Instance>(object);
-            Vec3 translation = instance->get_translation();
-            Vec3 scale = instance->get_scale();
-            Vec3 rotation = instance->get_rotation();
-            bool transforms_the_texture = instance->get_transform_the_texture();
-            if (ImGuiUtils::input("Translation", translation, modified)) {
-                instance->set_translation(translation);
-            }
-
-            if (ImGuiUtils::input("Scale", scale, modified)) {
-                instance->set_scale(scale);
-            }
-
-            if (ImGuiUtils::input_degrees("Rotation", rotation, modified)) {
-                instance->set_rotation_x(rotation.x);
-                instance->set_rotation_y(rotation.y);
-                instance->set_rotation_z(rotation.z);
-            }
-
-            if (ImGui::Checkbox("Transform texture", &transforms_the_texture)) {
-                instance->set_transform_the_texture(transforms_the_texture);
-            }
-
-        } break;
-
-        case GeometricObjectType::BoundingVolumeHierarchy: {
-            auto bvh = std::dynamic_pointer_cast<GeometricObjects::BVH>(object);
-
-            if (bvh->is_built())
-                ImGui::Text("Tree built");
-            else
-                ImGui::Text("Tree not built");
-
-            if (ImGui::Button("Build"))
-                bvh->build_tree();
-
-            bool modified_child = edit_container(bvh);
-            if (modified_child)
-                bvh->set_built_state(false);
-        } break;
-
-        default:
-            std::cout << "Unimplemented object type in Scene objects switch" << std::endl;
-        }
-
-        // Visibility
-        bool visible = object->is_visible();
-        if (ImGui::Checkbox("Visible", &visible))
-            object->set_visibility(visible);
-
-        // Shadows
-        bool casts_shadows = object->casts_shadows();
-        if (ImGui::Checkbox("Casts shadows", &casts_shadows)) {
-            if (casts_shadows)
-                object->enable_shadows();
-            else
-                object->disable_shadows();
-        }
-
-        // Normal
-        int normal_type = static_cast<int>(object->get_normal_type());
-        auto normal_types = std::array<const char*, 3> { "Flip", "Outwards", "Inwards" };
-        bool normal_changed = ImGuiUtils::combo_box("Normal type", normal_types, normal_type, modified);
-
-        if (normal_changed) {
-            switch (static_cast<NormalType>(normal_type)) {
-            case NormalType::Flip:
-                object->set_normal_flip();
-                break;
-            case NormalType::Outwards:
-                object->set_normal_outwards();
-                break;
-            case NormalType::Inwards:
-                object->set_normal_inwards();
-                break;
-            default:
-                break;
-            }
-        }
-        // Adds material editor
-        if (object->has_material())
-            edit_material(object->material);
-
-        ImGui::TreePop();
-    }
-    return modified;
-}
-
-static bool edit_container(const std::shared_ptr<GeometricObjects::Container>& container)
-{
-    bool modified_child = false;
-    if (ImGui::TreeNodeEx("container")) {
-        int id_index = 0;
-        for (auto i = container->begin(); i != container->end(); i++) {
-            ImGui::PushID(id_index++);
-            auto object = *i;
-            modified_child |= edit_geometric_object(object);
-            ImGui::PopID();
-        }
-        ImGui::TreePop();
-    }
-    return modified_child;
-}
 static bool edit_sampler(const char* label, std::shared_ptr<Sampler>& sampler)
 {
     static std::array<const char*, 4> sampler_types = { "Regular", "Jittered", "MultiJittered", "NRooks" };
@@ -803,8 +403,7 @@ static bool edit_sampler(const char* label, std::shared_ptr<Sampler>& sampler)
 
     // New variable, so combo_box() doesn't modify 'sampler_index' var
     int modified_index = sampler_index;
-    bool modified = false;
-    ImGuiUtils::combo_box("Sampler type", sampler_types, modified_index, modified);
+    bool modified = ImGuiUtils::combo_box("Sampler type", sampler_types, modified_index);
 
     int samples = sampler->get_num_samples();
     modified |= ImGui::InputInt("Samples", &samples);
@@ -868,7 +467,7 @@ static bool edit_light(std::shared_ptr<Light>& light)
     if (ImGui::TreeNodeEx(light_label)) {
 
         // 1 - Light type selector
-        bool changed = ImGuiUtils::combo_box("Light type", light_types, current_light_index, modified);
+        bool changed = ImGuiUtils::combo_box("Light type", light_types, current_light_index);
 
         LightType selected = static_cast<LightType>(current_light_index);
 
@@ -917,24 +516,24 @@ static bool edit_light(std::shared_ptr<Light>& light)
         switch (light->get_type()) {
         case LightType::Ambient: {
             auto ambient = std::dynamic_pointer_cast<Lights::AmbientLight>(light);
-            ImGuiUtils::color_edit("Color", ambient->color, modified);
+            ImGuiUtils::color_edit("Color", ambient->color);
             ImGui::InputFloat("Scale radiance", &ambient->ls);
         } break;
 
         case LightType::Directional: {
             auto directional = std::dynamic_pointer_cast<Lights::DirectionalLight>(light);
-            ImGuiUtils::color_edit("Color", directional->color, modified);
+            ImGuiUtils::color_edit("Color", directional->color);
             ImGui::InputFloat("Scale radiance", &directional->ls);
-            ImGuiUtils::input("Direction", directional->direction, modified);
+            ImGuiUtils::input("Direction", directional->direction);
 
         } break;
 
         case LightType::Point: {
             auto point = std::dynamic_pointer_cast<Lights::PointLight>(light);
-            ImGuiUtils::color_edit("Color", point->color, modified);
+            ImGuiUtils::color_edit("Color", point->color);
             ImGui::InputFloat("Scale radiance", &point->ls);
             ImGui::InputFloat("Fall off power", &point->k);
-            ImGuiUtils::input("Origin", point->origin, modified);
+            ImGuiUtils::input("Origin", point->origin);
         } break;
 
         case LightType::JitteredPoint: {
@@ -946,11 +545,11 @@ static bool edit_light(std::shared_ptr<Light>& light)
             float radius = point->get_radius();
             RGBColor color = point->get_color();
 
-            ImGuiUtils::input("Origin", origin, modified);
-            ImGuiUtils::input("Scale radiance", scale_radiance, modified);
-            ImGuiUtils::input("Fall off power", fall_off_power, modified);
-            ImGuiUtils::input("Radius", radius, modified);
-            ImGuiUtils::color_edit("Color", color, modified);
+            ImGuiUtils::input("Origin", origin);
+            ImGuiUtils::input("Scale radiance", scale_radiance);
+            ImGuiUtils::input("Fall off power", fall_off_power);
+            ImGuiUtils::input("Radius", radius);
+            ImGuiUtils::color_edit("Color", color);
 
             point->set_origin(origin);
             point->set_scale_radiance(scale_radiance);
@@ -969,10 +568,10 @@ static bool edit_light(std::shared_ptr<Light>& light)
             float theta = directional->get_theta();
             RGBColor color = directional->get_color();
 
-            ImGuiUtils::input("Direction", direction, modified);
-            ImGuiUtils::input("Scale radiance", scale_radiance, modified);
-            ImGuiUtils::input("Theta", theta, modified);
-            ImGuiUtils::color_edit("Color", color, modified);
+            ImGuiUtils::input("Direction", direction);
+            ImGuiUtils::input("Scale radiance", scale_radiance);
+            ImGuiUtils::input("Theta", theta);
+            ImGuiUtils::color_edit("Color", color);
 
             directional->set_direction(direction);
             directional->set_scale_radiance(scale_radiance);
@@ -985,7 +584,7 @@ static bool edit_light(std::shared_ptr<Light>& light)
 
         case LightType::AmbientOccluder: {
             auto ao = std::dynamic_pointer_cast<Lights::AmbientOccluder>(light);
-            ImGuiUtils::color_edit("Color", ao->color, modified);
+            ImGuiUtils::color_edit("Color", ao->color);
             ImGui::InputFloat("Scale radiance", &ao->ls);
             ImGui::InputFloat("Min intensity", &ao->min_intensity);
             edit_sampler("Hemisphere sampler", ao->sampler);

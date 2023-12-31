@@ -33,7 +33,7 @@ protected:
     }
 
 private:
-    void _render_node(SceneNodePtr& node);
+    void _render_node(SceneNodePtr& node, uint32_t id = 0);
 
     void _popup_context_item(SceneNodePtr& container);
 

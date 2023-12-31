@@ -23,10 +23,8 @@ public:
 
     virtual void _on_render() override
     {
-        ImGui::Text("Hi");
-
         if (_scene_node != nullptr) {
-            _render_geometric_object_editor();
+            _render_geometric_object_editor(_scene_node);
         }
     }
 
@@ -36,7 +34,7 @@ public:
     }
 
 private:
-    void _render_geometric_object_editor();
+    void _render_geometric_object_editor(SceneNodePtr&);
 
 private:
     InspectorState _state;

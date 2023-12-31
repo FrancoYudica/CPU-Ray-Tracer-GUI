@@ -155,8 +155,7 @@ void MainLayer::on_ui_render_start()
         ImGui::Checkbox("Show out of gamut", &world.show_out_of_gamut);
         ImGui::Separator();
 
-        bool modified = false;
-        ImGuiUtils::color_edit("Out of gamut color", world.out_of_gamut_color, modified);
+        ImGuiUtils::color_edit("Out of gamut color", world.out_of_gamut_color);
         ImGui::Separator();
 
         if (ImGui::Button("Render"))
@@ -242,15 +241,13 @@ void MainLayer::on_ui_render_start()
     // Tracer configuration -----------------------------------------------------------------
     if (ImGui::TreeNodeEx("Tracer", ImGuiTreeNodeFlags_Framed)) {
         int current_item = static_cast<int>(world.tracer->get_type());
-        bool modified_tracer = false;
-        ImGuiUtils::combo_box<4>(
+        bool modified_tracer = ImGuiUtils::combo_box<4>(
             "Tracer",
             { "Ray cast",
                 "Depth",
                 "Normal",
                 "Area lighting" },
-            current_item,
-            modified_tracer);
+            current_item);
         if (modified_tracer) {
             TracerType selected_type = static_cast<TracerType>(current_item);
             if (selected_type != world.tracer->get_type()) {
@@ -279,24 +276,11 @@ void MainLayer::on_ui_render_start()
     {
         ImGui::Begin("Scene");
         bool modified_scene = false;
-        ImGuiUtils::color_edit("Background color", world.background_color, modified_scene);
+        ImGuiUtils::color_edit("Background color", world.background_color);
 
         ImGuiRT::edit_light(world.ambient_light);
 
         ImGui::Separator();
-        /*
-        if (ImGui::TreeNodeEx("Geometric objects", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed)) {
-            // Displays editor for all GeometricObject
-            uint32_t n = 0;
-            for (auto i = world.root_container->begin(); i != world.root_container->end(); i++) {
-                ImGui::PushID(n++);
-                GeometricObjectPtr object = *i;
-                ImGuiRT::edit_geometric_object(object);
-                ImGui::PopID();
-            }
-            ImGui::TreePop();
-        }
-        */
 
         if (ImGui::TreeNodeEx("Lights", ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_DefaultOpen)) {
             // Displays editor for all lights

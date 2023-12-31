@@ -15,16 +15,16 @@ typedef std::shared_ptr<SceneNode> SceneNodePtr;
 class SceneNode {
 
 public:
-    SceneNode(const RT::GeometricObjectPtr& object)
-        : _object(object)
-        , _name("Unnamed")
+    SceneNode(const GeometricObjectPtr& object)
+        : _name("Unnamed")
+        , _object(object)
+        , _is_container(is_container_type(object->get_type()))
     {
-        _is_container = is_container_type(_object->get_type());
     }
 
     inline void set_name(const std::string& name) { _name = name; }
 
-    inline const RT::GeometricObjectPtr& get_object() const { return _object; }
+    inline const GeometricObjectPtr& get_object() const { return _object; }
 
     inline const std::string& get_name() const { return _name; }
 
@@ -41,30 +41,29 @@ public:
         if (!node->is_container())
             return;
 
-        auto container = std::dynamic_pointer_cast<GeometricObjects::Container>(node->get_object());
+        GeometricObjectPtr object = node->get_object();
+
+        auto container = std::dynamic_pointer_cast<GeometricObjects::Container>(object);
 
         for (int i = 0; i < container->size(); i++) {
             GeometricObjectPtr child_object = *(i + container->begin());
+            // Creates child SceneNode
             SceneNodePtr child_node = std::make_shared<SceneNode>(child_object);
 
+            // Links with parent
             node->_children.push_back(child_node);
             child_node->_parent = node;
 
             SceneNode::initialize_recursive(child_node);
         }
-
-        // for (auto i = container->begin(); i < container->end(); i++) {
-        //     GeometricObjectPtr child_object = *i;
-        //     SceneNodePtr child_node = std::make_shared<SceneNode>(child_object);
-        //     SceneNode::set_parent(node, child_node);
-        //     SceneNode::initialize_recursive(child_node);
-        // }
     }
 
     static void set_parent(SceneNodePtr& parent, SceneNodePtr& child)
     {
+        // Unbinds previous parent
         unbind_parent(child);
 
+        // Binds new parent
         bind_parent(parent, child);
     }
 
@@ -72,19 +71,20 @@ public:
     {
         // Removes child from previous parent
         SceneNodePtr previous_parent = node->get_parent();
-        if (previous_parent) {
 
-            // Removes from node
-            auto& children = previous_parent->_children;
-            auto itr = std::find(children.begin(), children.end(), node);
-            if (itr != std::end(children))
-                children.erase(itr);
+        if (!previous_parent)
+            return;
 
-            // Removes from container
-            GeometricObjectPtr parent_object = previous_parent->get_object();
-            std::shared_ptr<GeometricObjects::Container> previous_parent_container = std::dynamic_pointer_cast<GeometricObjects::Container>(parent_object);
-            previous_parent_container->remove(node->get_object());
-        }
+        // Removes from node
+        auto& children = previous_parent->_children;
+        auto itr = std::find(children.begin(), children.end(), node);
+        if (itr != std::end(children))
+            children.erase(itr);
+
+        // Removes from container
+        GeometricObjectPtr parent_object = previous_parent->get_object();
+        std::shared_ptr<GeometricObjects::Container> previous_parent_container = std::dynamic_pointer_cast<GeometricObjects::Container>(parent_object);
+        previous_parent_container->remove(node->get_object());
     }
 
     static void bind_parent(SceneNodePtr& parent, SceneNodePtr& node)
@@ -99,26 +99,43 @@ public:
         parent_container->add(node->get_object());
     }
 
-private:
-    void _on_immediate_child_added(SceneNodePtr& child)
+    static void remove(SceneNodePtr& node)
     {
+        unbind_parent(node);
+
+        // Gets parent
+        SceneNodePtr parent = node->get_parent();
+
+        // If it has parent
+        if (parent) {
+
+            // Recalculates bounding boxes
+            parent->get_object()->recalculate_bounding_box();
+            SceneNode::bounding_box_modified(parent);
+        }
     }
 
-    void _on_immediate_child_removed(SceneNodePtr& child)
+    /// @brief Called when the bounding box of a GeometricObject is modified
+    /// propagates this call upwards in 'bottom->up' way.
+    static void bounding_box_modified(SceneNodePtr& node)
     {
-    }
+        if (node == nullptr || node->is_root())
+            return;
 
-    void _on_child_added(SceneNodePtr& child)
-    {
+        SceneNodePtr parent = node->get_parent();
+        GeometricObjectPtr parent_container = parent->get_object();
+        parent_container->recalculate_bounding_box();
+        bounding_box_modified(parent);
     }
 
 private:
     std::string _name;
-    RT::GeometricObjectPtr _object;
+    GeometricObjectPtr _object;
     SceneNodePtr _parent;
     std::vector<SceneNodePtr> _children;
-    bool _is_container;
+    const bool _is_container;
 };
 
 }
+
 #endif
