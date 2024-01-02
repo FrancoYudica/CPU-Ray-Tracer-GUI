@@ -1,7 +1,7 @@
 #ifndef __CAMERA_CONTROLLER__
 #define __CAMERA_CONTROLLER__
-#include "WEngine.h"
 #include "CPU-Ray-Tracing/CPURayTracer.hpp"
+#include "WEngine.h"
 
 using namespace RT;
 
@@ -12,13 +12,12 @@ public:
         , _look_at(Vec3f(0.0, 0.0, -1.0))
         , _speed(50.0f)
         , _up(Vec3f(0, 1, 0))
-        , _previous_mouse_pos(Wolf::Input::get_mouse_pos())
-        , _sensibility(Vec2f(0.1f))
+        , _sensibility(Vec2f(1.0f))
     {
         _recalculate_angles();
     }
 
-    bool on_update(const Wolf::Time& dt);
+    bool on_update(const glm::vec2& mouse_delta, const Wolf::Time& dt);
 
     inline Vec3f get_eye() const { return _eye; }
     inline Vec3f get_look_at() const { return _look_at; }

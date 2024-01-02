@@ -141,61 +141,85 @@ void Editor::InspectorPanel::_render_geometric_object_editor(SceneNodePtr& scene
         ImGui::TreePop();
     }
 
+    // Common geometric object properties
     if (ImGui::TreeNodeEx("Geometric object", tree_flags)) {
 
-        // Visibility
-        bool visible = _object->is_visible();
-        if (ImGui::Checkbox("Visible", &visible))
-            _object->set_visibility(visible);
+        ImGuiTreeNodeFlags sub_tree_flags = ImGuiTreeNodeFlags_DefaultOpen;
 
-        // Shadows
-        bool casts_shadows = _object->casts_shadows();
-        if (ImGui::Checkbox("Casts shadows", &casts_shadows)) {
-            if (casts_shadows)
-                _object->enable_shadows();
-            else
-                _object->disable_shadows();
-        }
+        // 1 - Visibility
+        if (ImGui::TreeNodeEx("Visibility", sub_tree_flags)) {
+            bool visible = _object->is_visible();
+            if (ImGui::Checkbox("Visible", &visible))
+                _object->set_visibility(visible);
 
-        bool has_bounding_box = _object->has_bounding_box();
-        if (has_bounding_box) {
-            ImGui::Text("Has bounding box");
-            bool bounding_box_enabled = _object->bounding_box_enabled();
-            if (ImGui::Checkbox("Bounding box enabled", &bounding_box_enabled)) {
-                if (bounding_box_enabled)
-                    _object->enable_bounding_box();
+            // Shadows
+            bool casts_shadows = _object->casts_shadows();
+            if (ImGui::Checkbox("Casts shadows", &casts_shadows)) {
+                if (casts_shadows)
+                    _object->enable_shadows();
                 else
-                    _object->disable_bounding_box();
+                    _object->disable_shadows();
             }
-        } else
-            ImGui::Text("Doesn't have bounding box");
 
-        if (ImGui::Button("Recalculate bounding box"))
-            _object->recalculate_bounding_box();
+            // Normal
+            int normal_type = static_cast<int>(_object->get_normal_type());
+            auto normal_types = std::array<const char*, 3> { "Flip", "Outwards", "Inwards" };
+            bool normal_changed = ImGuiUtils::combo_box("Normal type", normal_types, normal_type);
 
-        // Normal
-        int normal_type = static_cast<int>(_object->get_normal_type());
-        auto normal_types = std::array<const char*, 3> { "Flip", "Outwards", "Inwards" };
-        bool normal_changed = ImGuiUtils::combo_box("Normal type", normal_types, normal_type);
-
-        if (normal_changed) {
-            switch (static_cast<NormalType>(normal_type)) {
-            case NormalType::Flip:
-                _object->set_normal_flip();
-                break;
-            case NormalType::Outwards:
-                _object->set_normal_outwards();
-                break;
-            case NormalType::Inwards:
-                _object->set_normal_inwards();
-                break;
-            default:
-                break;
+            if (normal_changed) {
+                switch (static_cast<NormalType>(normal_type)) {
+                case NormalType::Flip:
+                    _object->set_normal_flip();
+                    break;
+                case NormalType::Outwards:
+                    _object->set_normal_outwards();
+                    break;
+                case NormalType::Inwards:
+                    _object->set_normal_inwards();
+                    break;
+                default:
+                    break;
+                }
+                // Adds material editor
+                if (_object->has_material())
+                    ImGuiRT::edit_material(_object->material);
             }
-            // Adds material editor
-            if (_object->has_material())
-                ImGuiRT::edit_material(_object->material);
+
+            ImGui::TreePop();
         }
+
+        // 2 - Bounding box
+        if (ImGui::TreeNodeEx("Bounding box", sub_tree_flags)) {
+            bool has_bounding_box = _object->has_bounding_box();
+            if (has_bounding_box) {
+                ImGui::Text("Has bounding box");
+                bool bounding_box_enabled = _object->bounding_box_enabled();
+                if (ImGui::Checkbox("Bounding box enabled", &bounding_box_enabled)) {
+                    if (bounding_box_enabled)
+                        _object->enable_bounding_box();
+                    else
+                        _object->disable_bounding_box();
+                }
+            } else
+                ImGui::Text("Doesn't have bounding box");
+
+            if (ImGui::Button("Recalculate bounding box"))
+                _object->recalculate_bounding_box();
+
+            ImGui::TreePop();
+        }
+
+        // 3 - Material
+        if (ImGui::TreeNodeEx("Material", sub_tree_flags)) {
+            if (_object->has_material()) {
+                auto mtl = _object->get_material();
+                ImGuiRT::edit_material(mtl);
+            } else {
+                ImGui::Text("Object doesn't have material");
+            }
+            ImGui::TreePop();
+        }
+
         ImGui::TreePop();
     }
 

@@ -1,10 +1,10 @@
+#include "CPU-Ray-Tracing/CPURayTracer.hpp"
 #include "CameraController.hpp"
 #include "WEngine.h"
 #include "editor/EditorUI.hpp"
 #include "editor/InspectorPanel.hpp"
 #include "editor/SceneHierarchyPanel.hpp"
 #include "editor/SceneNode.hpp"
-#include "CPU-Ray-Tracing/CPURayTracer.hpp"
 
 class MainLayer : public Wolf::Layer {
 public:
@@ -19,6 +19,10 @@ public:
     Editor::SceneHierarchyPanel scene_hierarchy_panel;
     Editor::InspectorPanel inspector_panel;
     Editor::EditorUI editor_ui;
+    bool viewport_hovered;
+    glm::uvec2 viewport_pos;
+    glm::vec2 mouse_pos;
+    bool camera_enabled;
 
 public:
     void on_start() override;

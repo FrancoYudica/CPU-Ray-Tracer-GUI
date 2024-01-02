@@ -58,19 +58,30 @@ void MainLayer::on_event(const Unique<Event>& event)
 
 void MainLayer::on_update(const Wolf::Time& delta)
 {
-    // Camera translation and rotation
-    if (camera_controller.on_update(delta)) {
+
+    bool using_camera = viewport_hovered && Wolf::Input::is_button_down(MouseButton::RIGHT);
+
+    // Calculates mouse delta
+    glm::vec2 current_mouse_pos = Wolf::Input::get_mouse_pos_norm();
+    auto p_norm = Wolf::Input::get_mouse_pos_norm();
+    glm::vec2 mouse_delta = current_mouse_pos - mouse_pos;
+
+    // Sets mouse mode
+    if (using_camera) {
+        Wolf::Cursor::set_mode(Cursor::CursorMode::Disabled);
+        Wolf::Input::set_mouse_pos_norm(mouse_pos);
+
+    } else {
+        Wolf::Cursor::set_mode(Cursor::CursorMode::Normal);
+        mouse_pos = current_mouse_pos;
+    }
+
+    if (using_camera && camera_controller.on_update(mouse_delta, delta)) {
         world.camera->set_eye(camera_controller.get_eye());
         world.camera->set_look_at(camera_controller.get_look_at());
         world.camera->setup_camera();
         _render_to_texture();
     }
-
-    if (Wolf::Input::is_button_down(MouseButton::RIGHT)) {
-        Wolf::Cursor::set_mode(Cursor::CursorMode::Disabled);
-
-    } else
-        Wolf::Cursor::set_mode(Cursor::CursorMode::Normal);
 }
 
 void MainLayer::_render_to_texture()
@@ -327,6 +338,8 @@ void MainLayer::on_ui_render_start()
     {
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0, 0 });
         ImGui::Begin("Render", nullptr, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoDecoration);
+        viewport_pos.x = ImGui::GetCursorScreenPos().x;
+        viewport_pos.y = ImGui::GetCursorScreenPos().y;
         viewport_size.x = ImGui::GetContentRegionAvail().x;
         viewport_size.y = ImGui::GetContentRegionAvail().y;
         float aspect_ratio = static_cast<float>(world.render_buffer->width) / world.render_buffer->height;
@@ -335,6 +348,10 @@ void MainLayer::on_ui_render_start()
         ImGui::Image(reinterpret_cast<ImTextureID>(texture->get_id()), size, { 0, 1 }, { 1, 0 });
         ImGui::End();
         ImGui::PopStyleVar(1);
+
+        auto p1 = viewport_pos + viewport_size;
+        auto mouse = ImGui::GetMousePos();
+        viewport_hovered = viewport_pos.x < mouse.x && viewport_pos.y < mouse.y && mouse.x < p1.x && mouse.y < p1.y;
     }
 }
 

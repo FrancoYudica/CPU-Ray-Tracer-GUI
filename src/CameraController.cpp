@@ -2,24 +2,10 @@
 
 #define HALF_PIf 3.14159265358979f * 0.5f
 
-void CameraController::_recalculate_angles()
+bool CameraController::on_update(const glm::vec2& mouse_delta, const Wolf::Time& dt)
 {
-    glm::vec3 direction = glm::normalize(_look_at - _eye);
-    _yaw = atan2f(direction.z, direction.x);
-    _pitch = asinf(direction.y);
-}
 
-bool CameraController::on_update(const Wolf::Time& dt)
-{
-    Vec2f mouse_pos = Wolf::Input::get_mouse_pos();
-    Vec2f mouse_delta = mouse_pos - _previous_mouse_pos;
-    _previous_mouse_pos = mouse_pos;
-
-    if (!Wolf::Input::is_button_down(MouseButton::RIGHT))
-        return false;
-
-    bool moved
-        = false;
+    bool moved = false;
     _yaw += _sensibility.x * mouse_delta.x;
     _pitch += _sensibility.y * mouse_delta.y;
     // Camera rotation
@@ -79,4 +65,11 @@ bool CameraController::on_update(const Wolf::Time& dt)
     _eye += offset;
     _look_at += offset;
     return moved;
+}
+
+void CameraController::_recalculate_angles()
+{
+    glm::vec3 direction = glm::normalize(_look_at - _eye);
+    _yaw = atan2f(direction.z, direction.x);
+    _pitch = asinf(direction.y);
 }

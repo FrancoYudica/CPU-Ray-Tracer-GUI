@@ -310,8 +310,11 @@ static bool material_combo_box(const char* label, std::shared_ptr<Material>& mat
 /// @param brdf
 static bool edit_brdf(const char* label, std::shared_ptr<BRDF> brdf)
 {
-    static const std::array<const char*, 3> brdf_types = { "BRDF: Lambertian", "BRDF: Glossy Specular - Phong",
-        "BRDF: Glossy Specular - Blinn Phong" };
+    static const std::array<const char*, 3> brdf_types = {
+        "BRDF: Lambertian",
+        "BRDF: Glossy Specular - Phong",
+        "BRDF: Glossy Specular - Blinn Phong"
+    };
     bool modified = false;
     if (ImGui::TreeNodeEx(label)) {
         const char* brdf_type_name = brdf_types[static_cast<uint32_t>(brdf->get_type())];
@@ -321,24 +324,24 @@ static bool edit_brdf(const char* label, std::shared_ptr<BRDF> brdf)
 
         {
             auto lambertian = std::dynamic_pointer_cast<BRDFS::Lambertian>(brdf);
-            ImGuiUtils::color_edit("Color", lambertian->cd);
-            ImGui::InputFloat("Coefficient", &lambertian->kd, 0.01f, 0.01f);
+            modified |= ImGuiUtils::color_edit("Color", lambertian->cd);
+            modified |= ImGui::InputFloat("Coefficient", &lambertian->kd, 0.01f, 0.01f);
             lambertian->kd = glm::clamp(lambertian->kd, 0.0f, 1.0f);
         } break;
         case BRDFType::GlossySpecularPhong: {
             auto glossy_specular = std::dynamic_pointer_cast<BRDFS::GlossySpecularPhong>(brdf);
-            ImGuiUtils::color_edit("Color", glossy_specular->cs);
-            ImGui::InputFloat("Coefficient", &glossy_specular->ks, 0.01f, 0.01f);
+            modified |= ImGuiUtils::color_edit("Color", glossy_specular->cs);
+            modified |= ImGui::InputFloat("Coefficient", &glossy_specular->ks, 0.01f, 0.01f);
             glossy_specular->ks = glm::clamp(glossy_specular->ks, 0.0f, 1.0f);
-            ImGui::InputFloat("Specular exponent", &glossy_specular->e, 0.01f, 0.01f);
+            modified |= ImGui::InputFloat("Specular exponent", &glossy_specular->e, 0.01f, 0.01f);
         } break;
 
         case BRDFType::GlossySpecularBlinnPhong: {
             auto glossy_specular = std::dynamic_pointer_cast<BRDFS::GlossySpecularBlinnPhong>(brdf);
-            ImGuiUtils::color_edit("Color", glossy_specular->cs);
-            ImGui::InputFloat("Coefficient", &glossy_specular->ks, 0.01f, 0.01f);
+            modified |= ImGuiUtils::color_edit("Color", glossy_specular->cs);
+            modified |= ImGui::InputFloat("Coefficient", &glossy_specular->ks, 0.01f, 0.01f);
             glossy_specular->ks = glm::clamp(glossy_specular->ks, 0.0f, 1.0f);
-            ImGui::InputFloat("Specular exponent", &glossy_specular->e, 0.01f, 0.01f);
+            modified |= ImGui::InputFloat("Specular exponent", &glossy_specular->e, 0.01f, 0.01f);
         } break;
         }
         ImGui::TreePop();
@@ -354,37 +357,34 @@ static bool edit_material(std::shared_ptr<Material>& material)
     bool modified = false;
     static const std::array<const char*, 4> material_types = { "Matte material", "Phong material", "Plastic material", "Emissive" };
     const char* material_type_name = material_types[static_cast<uint32_t>(material->get_type())];
-    if (ImGui::TreeNodeEx(material_type_name)) {
-        material_combo_box("Material", material);
-        switch (material->get_type()) {
-        case MaterialType::Matte: {
-            auto matte = std::dynamic_pointer_cast<Materials::Matte>(material);
-            edit_brdf("Ambient", matte->ambient_brdf);
-            edit_brdf("Diffuse", matte->diffuse_brdf);
-        } break;
-        case MaterialType::Phong: {
-            auto phong = std::dynamic_pointer_cast<Materials::Phong>(material);
-            edit_brdf("Ambient", phong->ambient_brdf);
-            edit_brdf("Diffuse", phong->diffuse_brdf);
-            edit_brdf("Specular", phong->specular_brdf);
-        } break;
+    material_combo_box("Material", material);
+    switch (material->get_type()) {
+    case MaterialType::Matte: {
+        auto matte = std::dynamic_pointer_cast<Materials::Matte>(material);
+        modified |= edit_brdf("Ambient", matte->ambient_brdf);
+        modified |= edit_brdf("Diffuse", matte->diffuse_brdf);
+    } break;
+    case MaterialType::Phong: {
+        auto phong = std::dynamic_pointer_cast<Materials::Phong>(material);
+        modified |= edit_brdf("Ambient", phong->ambient_brdf);
+        modified |= edit_brdf("Diffuse", phong->diffuse_brdf);
+        modified |= edit_brdf("Specular", phong->specular_brdf);
+    } break;
 
-        case MaterialType::Plastic: {
-            auto plastic = std::dynamic_pointer_cast<Materials::Plastic>(material);
-            brdf_combo_box("Ambient BRDF: ", plastic->ambient_brdf);
-            brdf_combo_box("Diffuse BRDF: ", plastic->diffuse_brdf);
-            brdf_combo_box("Specular BRDF: ", plastic->specular_brdf);
-            edit_brdf("Ambient", plastic->ambient_brdf);
-            edit_brdf("Diffuse", plastic->diffuse_brdf);
-            edit_brdf("Specular", plastic->specular_brdf);
-        } break;
-        case MaterialType::Emissive: {
-            auto emissive = std::dynamic_pointer_cast<Materials::Emissive>(material);
-            ImGuiUtils::color_edit("Emission color", emissive->color);
-            ImGui::InputFloat("Scale radiance", &emissive->ls);
-        } break;
-        }
-        ImGui::TreePop();
+    case MaterialType::Plastic: {
+        auto plastic = std::dynamic_pointer_cast<Materials::Plastic>(material);
+        modified |= brdf_combo_box("Ambient BRDF: ", plastic->ambient_brdf);
+        modified |= brdf_combo_box("Diffuse BRDF: ", plastic->diffuse_brdf);
+        modified |= brdf_combo_box("Specular BRDF: ", plastic->specular_brdf);
+        modified |= edit_brdf("Ambient", plastic->ambient_brdf);
+        modified |= edit_brdf("Diffuse", plastic->diffuse_brdf);
+        modified |= edit_brdf("Specular", plastic->specular_brdf);
+    } break;
+    case MaterialType::Emissive: {
+        auto emissive = std::dynamic_pointer_cast<Materials::Emissive>(material);
+        modified |= ImGuiUtils::color_edit("Emission color", emissive->color);
+        modified |= ImGuiUtils::input("Scale radiance", emissive->ls);
+    } break;
     }
     return modified;
 }
