@@ -55,6 +55,8 @@ namespace ObjectEditor {
 
     uint8_t edit_transform_container(RT::GeometricObjectPtr& object);
 
+    uint8_t edit_bowl(RT::GeometricObjectPtr& object);
+
 }
 
 }

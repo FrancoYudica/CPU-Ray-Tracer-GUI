@@ -110,8 +110,13 @@ void Editor::InspectorPanel::_render_geometric_object_editor(SceneNodePtr& scene
         case GeometricObjectType::PartTorus:
             edit_states = Editor::ObjectEditor::edit_part_torus(_object);
             break;
+
         case GeometricObjectType::Torus:
             edit_states = Editor::ObjectEditor::edit_torus(_object);
+            break;
+
+        case GeometricObjectType::Bowl:
+            edit_states = Editor::ObjectEditor::edit_bowl(_object);
             break;
 
         case GeometricObjectType::Instance:

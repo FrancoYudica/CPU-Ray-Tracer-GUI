@@ -526,3 +526,21 @@ uint8_t Editor::ObjectEditor::edit_transform_container(RT::GeometricObjectPtr& o
     }
     return state;
 }
+
+uint8_t Editor::ObjectEditor::edit_bowl(RT::GeometricObjectPtr& object)
+{
+    uint8_t state = EditState::None;
+    auto bowl = std::dynamic_pointer_cast<GeometricObjects::Bowl>(object);
+    float inner_radius = bowl->get_inner_radius();
+    float outer_radius = bowl->get_outer_radius();
+
+    if (ImGuiUtils::input("Inner radius", inner_radius)) {
+        bowl->set_inner_radius(inner_radius);
+        state |= BoundingBoxEdit;
+    }
+    if (ImGuiUtils::input("Outer radius", outer_radius)) {
+        bowl->set_outer_radius(outer_radius);
+        state |= BoundingBoxEdit;
+    }
+    return state;
+}
