@@ -54,12 +54,31 @@ void MainLayer::on_event(const Unique<Event>& event)
             render_camera.on_viewport_resize(event->width, event->height);
             return false;
         });
+
+    dispatcher.dispatch<ButtonDownEvent>(
+        Wolf::EventType::ButtonDown,
+        [&](const Unique<ButtonDownEvent>& event) {
+            if (event->button == MouseButton::RIGHT)
+                camera_enabled = viewport_hovered;
+            return false;
+        });
+
+    dispatcher.dispatch<ButtonUpEvent>(
+        Wolf::EventType::ButtonUp,
+        [&](const Unique<ButtonUpEvent>& event) {
+            if (event->button == MouseButton::RIGHT)
+                camera_enabled = false;
+            return false;
+        });
 }
 
 void MainLayer::on_update(const Wolf::Time& delta)
 {
-
-    bool using_camera = viewport_hovered && Wolf::Input::is_button_down(MouseButton::RIGHT);
+    if (viewport_hovered) {
+        auto& io = ImGui::GetIO();
+        ImGui::CaptureMouseFromApp(false);
+        io.WantCaptureMouse = false;
+    }
 
     // Calculates mouse delta
     glm::vec2 current_mouse_pos = Wolf::Input::get_mouse_pos_norm();
@@ -67,7 +86,7 @@ void MainLayer::on_update(const Wolf::Time& delta)
     glm::vec2 mouse_delta = current_mouse_pos - mouse_pos;
 
     // Sets mouse mode
-    if (using_camera) {
+    if (camera_enabled) {
         Wolf::Cursor::set_mode(Cursor::CursorMode::Disabled);
         Wolf::Input::set_mouse_pos_norm(mouse_pos);
 
@@ -76,7 +95,7 @@ void MainLayer::on_update(const Wolf::Time& delta)
         mouse_pos = current_mouse_pos;
     }
 
-    if (using_camera && camera_controller.on_update(mouse_delta, delta)) {
+    if (camera_enabled && camera_controller.on_update(mouse_delta, delta)) {
         world.camera->set_eye(camera_controller.get_eye());
         world.camera->set_look_at(camera_controller.get_look_at());
         world.camera->setup_camera();
