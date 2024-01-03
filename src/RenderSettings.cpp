@@ -40,8 +40,16 @@ void RenderSettings::load_settings(RT::World& world, const Settings& settings)
         world.view_plane.set_sampler(sampler);
     }
 
-    // Viewport size
+    // Viewport and pixel size
     {
+        // Calculates new pixel size, to keep the same
+        // ray dispersion
+        float prev_px_size = world.view_plane.pixel_size;
+        float b = prev_px_size * world.view_plane.h_res;
+        float px_size = b / settings.viewport_width;
+        world.view_plane.set_pixel_size(px_size);
+
+        // Updates viewport size
         world.view_plane.set_hres(settings.viewport_width);
         world.view_plane.set_vres(settings.viewport_height);
     }

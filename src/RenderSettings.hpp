@@ -29,8 +29,8 @@ constexpr Settings normal_settings {
 constexpr Settings lightweight_settings {
     1,
     RT::SamplerType::Regular,
-    300,
-    300,
+    150,
+    150,
     RT::TracerType::AreaLighting
 };
 
