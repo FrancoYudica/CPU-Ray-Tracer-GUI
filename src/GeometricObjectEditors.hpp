@@ -31,6 +31,8 @@ namespace ObjectEditor {
 
     uint8_t edit_triangle(RT::GeometricObjectPtr& object);
 
+    uint8_t edit_smooth_triangle(RT::GeometricObjectPtr& object);
+
     uint8_t edit_cone(RT::GeometricObjectPtr& object);
 
     uint8_t edit_solid_cone(RT::GeometricObjectPtr& object);

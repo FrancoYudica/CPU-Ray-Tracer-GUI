@@ -22,7 +22,7 @@ void MainLayer::on_start()
         1.0f);
 
     world = World();
-    world.set_build(BuildFunctions::build_instance_test_bvh);
+    world.set_build(BuildFunctions::build_uv_sphere_flat);
     world.build();
 
     camera_controller.set_eye(world.camera->eye);

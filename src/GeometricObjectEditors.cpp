@@ -245,6 +245,54 @@ uint8_t Editor::ObjectEditor::edit_triangle(RT::GeometricObjectPtr& object)
     return state;
 }
 
+uint8_t Editor::ObjectEditor::edit_smooth_triangle(RT::GeometricObjectPtr& object)
+{
+    uint8_t state = EditState::None;
+
+    auto triangle = std::dynamic_pointer_cast<GeometricObjects::SmoothTriangle>(object);
+
+    Vec3 a = triangle->get_a();
+    Vec3 b = triangle->get_b();
+    Vec3 c = triangle->get_c();
+    Vec3 na = triangle->get_na();
+    Vec3 nb = triangle->get_nb();
+    Vec3 nc = triangle->get_nc();
+
+    if (ImGuiUtils::input("a", a)) {
+
+        triangle->set_a(a);
+        state |= BoundingBoxEdit;
+    }
+    if (ImGuiUtils::input("b", b)) {
+
+        triangle->set_b(b);
+        state |= BoundingBoxEdit;
+    }
+    if (ImGuiUtils::input("c", c)) {
+
+        triangle->set_c(c);
+        state |= BoundingBoxEdit;
+    }
+
+    if (ImGuiUtils::input_normal("na", na)) {
+
+        triangle->set_na(na);
+        state |= BoundingBoxEdit;
+    }
+    if (ImGuiUtils::input_normal("nb", nb)) {
+
+        triangle->set_nb(nb);
+        state |= BoundingBoxEdit;
+    }
+    if (ImGuiUtils::input_normal("nc", nc)) {
+
+        triangle->set_nc(nc);
+        state |= BoundingBoxEdit;
+    }
+
+    return state;
+}
+
 uint8_t Editor::ObjectEditor::edit_cone(RT::GeometricObjectPtr& object)
 {
     uint8_t state = EditState::None;

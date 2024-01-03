@@ -113,13 +113,17 @@ void Editor::SceneHierarchyPanel::_popup_context_item(SceneNodePtr& node)
                 new_object = std::make_shared<RT::GeometricObjects::Torus>();
                 new_node_name = "Torus";
             }
+            if (ImGui::MenuItem("Plane")) {
+                new_object = std::make_shared<RT::GeometricObjects::Plane>();
+                new_node_name = "Plane";
+            }
             if (ImGui::MenuItem("Triangle")) {
                 new_object = std::make_shared<RT::GeometricObjects::Triangle>();
                 new_node_name = "Triangle";
             }
-            if (ImGui::MenuItem("Plane")) {
-                new_object = std::make_shared<RT::GeometricObjects::Plane>();
-                new_node_name = "Plane";
+            if (ImGui::MenuItem("Smooth Triangle")) {
+                new_object = std::make_shared<RT::GeometricObjects::SmoothTriangle>();
+                new_node_name = "Smooth Triangle";
             }
             ImGui::EndMenu();
         }

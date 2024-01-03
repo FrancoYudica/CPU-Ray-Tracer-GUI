@@ -11,7 +11,7 @@ void Editor::InspectorPanel::_render_geometric_object_editor(SceneNodePtr& scene
 
     GeometricObjectPtr _object = scene_node->get_object();
 
-    static const std::array<const char*, 23> geometric_types = {
+    static const std::array<const char*, 26> geometric_types = {
         "Sphere",
         "Plane",
         "Box",
@@ -34,7 +34,10 @@ void Editor::InspectorPanel::_render_geometric_object_editor(SceneNodePtr& scene
         "Instance",
         "BVH",
         "Container",
-        "Transform"
+        "Transform",
+        "Smooth Triangle",
+        "Flat Mesh Triangle",
+        "Smooth Mesh Triangle"
     };
     bool modified = false;
     const char* geometric_type_name = geometric_types[static_cast<uint32_t>(_object->get_type())];
@@ -82,6 +85,10 @@ void Editor::InspectorPanel::_render_geometric_object_editor(SceneNodePtr& scene
 
         case GeometricObjectType::Triangle:
             edit_states = Editor::ObjectEditor::edit_triangle(_object);
+            break;
+
+        case GeometricObjectType::SmoothTriangle:
+            edit_states = Editor::ObjectEditor::edit_smooth_triangle(_object);
             break;
 
         case GeometricObjectType::Cone:
