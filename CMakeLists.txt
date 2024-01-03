@@ -20,6 +20,8 @@ add_executable(
     src/CameraController.cpp
     src/GeometricObjectEditors.hpp
     src/GeometricObjectEditors.cpp
+    src/RenderSettings.hpp
+    src/RenderSettings.cpp
     ${EDITOR_FILES}
 )
 

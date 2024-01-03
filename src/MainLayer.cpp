@@ -34,7 +34,11 @@ void MainLayer::on_start()
 
     // Disables imgui.ini auto saving
     io.IniFilename = NULL;
-    _render_to_texture();
+
+    // Sets render settings and renders
+    render_settings = RenderSettings::performant_settings;
+    camera_render_settings = RenderSettings::lightweight_settings;
+    _render();
 
     Editor::SceneNodePtr scene_root = std::make_shared<Editor::SceneNode>(world.root_container);
     scene_root->set_name("Root");
@@ -59,22 +63,27 @@ void MainLayer::on_event(const Unique<Event>& event)
         Wolf::EventType::ButtonDown,
         [&](const Unique<ButtonDownEvent>& event) {
             if (event->button == MouseButton::RIGHT)
-                camera_enabled = viewport_hovered;
+                camera_enabled = render_panel.is_hovered();
             return false;
         });
 
     dispatcher.dispatch<ButtonUpEvent>(
         Wolf::EventType::ButtonUp,
         [&](const Unique<ButtonUpEvent>& event) {
-            if (event->button == MouseButton::RIGHT)
+            // Camera not used anymore, renders with
+            // high quality
+            if (event->button == MouseButton::RIGHT) {
                 camera_enabled = false;
+                _render();
+            }
+
             return false;
         });
 }
 
 void MainLayer::on_update(const Wolf::Time& delta)
 {
-    if (viewport_hovered) {
+    if (render_panel.is_hovered()) {
         auto& io = ImGui::GetIO();
         ImGui::CaptureMouseFromApp(false);
         io.WantCaptureMouse = false;
@@ -99,42 +108,8 @@ void MainLayer::on_update(const Wolf::Time& delta)
         world.camera->set_eye(camera_controller.get_eye());
         world.camera->set_look_at(camera_controller.get_look_at());
         world.camera->setup_camera();
-        _render_to_texture();
+        _render();
     }
-}
-
-void MainLayer::_render_to_texture()
-{
-
-    {
-        // Measures render time
-        auto timer = Wolf::ScopeTimer([&](Wolf::Time elapsed) {
-            render_scene_time = elapsed.seconds();
-        });
-
-        // Scene rendering
-        bool render_success = world.render_scene();
-        if (!render_success)
-            return;
-    }
-
-    // Texture configuration
-    Rendering::TextureConfig texture_config;
-    texture_config.pixel_format = Rendering::TextureTypes::PixelFormat::RGB;
-    texture_config.internal_pixel_format = Rendering::TextureTypes::PixelInternalFormat::RGB_8;
-    texture_config.pixel_type = Rendering::TextureTypes::PixelType::FLOAT;
-    texture_config.min_filter = texture_config.mag_filter = Rendering::TextureTypes::Filter::NEAREST;
-
-    // Stores output buffer in bitmap
-    texture_width = world.render_buffer->width;
-    texture_height = world.render_buffer->height;
-
-    // Creates a bitmap and copies buffer
-    auto bitmap = std::make_shared<Rendering::BitMap<RGBColor>>(
-        world.render_buffer->width,
-        world.render_buffer->height);
-    bitmap->copy_buffer(world.render_buffer->buffer_raw_ptr());
-    texture = Rendering::Texture::from_bitmap(bitmap, texture_config);
 }
 
 void MainLayer::on_ui_render_start()
@@ -167,6 +142,48 @@ void MainLayer::on_ui_render_start()
                 }
                 ImGui::EndMenu();
             }
+            if (ImGui::BeginMenu("Renderer")) {
+
+                if (ImGui::BeginMenu("Settings")) {
+
+                    if (ImGui::MenuItem("Normal")) {
+                        render_settings = RenderSettings::normal_settings;
+                    }
+
+                    if (ImGui::MenuItem("Lightweight")) {
+                        render_settings = RenderSettings::lightweight_settings;
+                    }
+                    if (ImGui::MenuItem("Performant")) {
+                        render_settings = RenderSettings::performant_settings;
+                    }
+
+                    if (ImGui::MenuItem("Release")) {
+                        render_settings = RenderSettings::release_settings;
+                    }
+                    ImGui::EndMenu();
+                }
+
+                if (ImGui::BeginMenu("Camera settings")) {
+
+                    if (ImGui::MenuItem("Normal")) {
+                        camera_render_settings = RenderSettings::normal_settings;
+                    }
+
+                    if (ImGui::MenuItem("Lightweight")) {
+                        camera_render_settings = RenderSettings::lightweight_settings;
+                    }
+                    if (ImGui::MenuItem("Performant")) {
+                        camera_render_settings = RenderSettings::performant_settings;
+                    }
+
+                    if (ImGui::MenuItem("Release")) {
+                        camera_render_settings = RenderSettings::release_settings;
+                    }
+                    ImGui::EndMenu();
+                }
+
+                ImGui::EndMenu();
+            }
 
             ImGui::EndMenuBar();
         }
@@ -178,6 +195,9 @@ void MainLayer::on_ui_render_start()
 
     inspector_panel.set_scene_node(scene_hierarchy_panel.get_selected());
     inspector_panel.show();
+
+    render_panel.show();
+
     // Renderer configs ---------------------------------------------------------------------
     {
         ImGui::Begin("Renderer");
@@ -189,11 +209,11 @@ void MainLayer::on_ui_render_start()
         ImGui::Separator();
 
         if (ImGui::Button("Render"))
-            _render_to_texture();
+            _render();
 
         std::string render_time = "elapsed: ";
         ImGui::SameLine();
-        render_time += std::to_string(render_scene_time);
+        render_time += std::to_string(render_panel.get_render_time());
         ImGui::Text("%s", render_time.c_str());
 
         ImGui::End();
@@ -214,8 +234,8 @@ void MainLayer::on_ui_render_start()
 
             if (ImGui::Button("Resize to viewport")) {
                 modified_resolution = true;
-                horizontal_resolution = viewport_size.x;
-                vertical_resolution = viewport_size.y;
+                horizontal_resolution = render_panel.get_size().x;
+                vertical_resolution = render_panel.get_size().y;
             }
 
             if (modified_resolution) {
@@ -353,25 +373,17 @@ void MainLayer::on_ui_render_start()
         }
         ImGui::End();
     }
-    // Render window -----------------------------------------------------------------------------
-    {
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0, 0 });
-        ImGui::Begin("Render", nullptr, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoDecoration);
-        viewport_pos.x = ImGui::GetCursorScreenPos().x;
-        viewport_pos.y = ImGui::GetCursorScreenPos().y;
-        viewport_size.x = ImGui::GetContentRegionAvail().x;
-        viewport_size.y = ImGui::GetContentRegionAvail().y;
-        float aspect_ratio = static_cast<float>(world.render_buffer->width) / world.render_buffer->height;
-        ImVec2 size = { static_cast<float>(viewport_size.x), static_cast<float>(viewport_size.x) / aspect_ratio };
+}
 
-        ImGui::Image(reinterpret_cast<ImTextureID>(texture->get_id()), size, { 0, 1 }, { 1, 0 });
-        ImGui::End();
-        ImGui::PopStyleVar(1);
+void MainLayer::_render()
+{
+    RenderSettings::Settings settings;
+    if (camera_enabled)
+        settings = camera_render_settings;
+    else
+        settings = render_settings;
 
-        auto p1 = viewport_pos + viewport_size;
-        auto mouse = ImGui::GetMousePos();
-        viewport_hovered = viewport_pos.x < mouse.x && viewport_pos.y < mouse.y && mouse.x < p1.x && mouse.y < p1.y;
-    }
+    render_panel.render_scene(world, settings);
 }
 
 void MainLayer::_save_render()

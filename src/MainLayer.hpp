@@ -1,8 +1,10 @@
 #include "CPU-Ray-Tracing/CPURayTracer.hpp"
 #include "CameraController.hpp"
+#include "RenderSettings.hpp"
 #include "WEngine.h"
 #include "editor/EditorUI.hpp"
 #include "editor/InspectorPanel.hpp"
+#include "editor/RenderPanel.hpp"
 #include "editor/SceneHierarchyPanel.hpp"
 #include "editor/SceneNode.hpp"
 
@@ -11,16 +13,14 @@ public:
     Wolf::Rendering::Camera render_camera;
     std::shared_ptr<Wolf::Rendering::Texture> texture;
     RT::World world;
-    uint32_t texture_width;
-    uint32_t texture_height;
-    float render_scene_time;
-    glm::uvec2 viewport_size;
     CameraController camera_controller;
     Editor::SceneHierarchyPanel scene_hierarchy_panel;
     Editor::InspectorPanel inspector_panel;
     Editor::EditorUI editor_ui;
-    bool viewport_hovered;
-    glm::uvec2 viewport_pos;
+    Editor::RenderPanel render_panel;
+
+    RenderSettings::Settings render_settings;
+    RenderSettings::Settings camera_render_settings;
     glm::vec2 mouse_pos;
     bool camera_enabled;
 
@@ -31,7 +31,9 @@ public:
     void on_ui_render_start() override;
 
 private:
-    void _render_to_texture();
     bool _camera_ui(std::shared_ptr<RT::Camera>& camera);
+
+    /// @brief Renders scene to main viewport
+    void _render();
     void _save_render();
 };
