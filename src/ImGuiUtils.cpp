@@ -32,8 +32,6 @@ bool ImGuiUtils::input(const char* label, RT::Vec3& vec3, float speed, float res
     ImGui::Text(label);
     ImGui::NextColumn();
 
-    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, .1f);
-
     float widthLeft = ImGui::CalcItemWidth();
     int item_width = static_cast<int>(widthLeft / 3);
     ImGui::PushItemWidth(item_width);
